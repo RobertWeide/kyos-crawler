@@ -1,3 +1,4 @@
+#!/bin/bash
 if [ -f kyos-crawler-running.txt ]; then
     exit
 fi
