@@ -18,6 +18,7 @@ var utils = require('utils');
 var f = utils.format;
 var keepDir = "./";
 var jsuri = require('js-uri.js');
+var lastUrl = '';
 
 function absPath(url, base) {
     var newURI = new jsuri.URI(url)
@@ -114,31 +115,34 @@ function crawl(link) {
             return elements;
         });
         pages = utils.unique(pages);
-        casper.echo('Pages: ' + pages);
-        casper.each(pages, function clickPage(self, pagenumber) {
-            self.waitFor(function clickOnPage() {
-                casper.echo('Page click: ' + pagenumber);
-                self.click('a.page[data-page="'+pagenumber+'"]');
-                self.wait(1000, addNewLinks);
-                return true;
-            });
-        } );
+        if (pages.length > 0) {
+            casper.echo('Pages: ' + pages);
+            casper.each(pages, function clickPage(self, pagenumber) {
+                self.waitFor(function clickOnPage() {
+                    casper.echo('Page click: ' + pagenumber);
+                    self.click('a.page[data-page="'+pagenumber+'"]');
+                    self.wait(1000, addNewLinks);
+                    return true;
+                });
+            } );
+        }
     });
+    lastUrl = '';
     this.then(clickNext);
 }
 
-function clickNext(url) {
+function clickNext() {
     if (this.exists('input[value=Next]')) {
-	if (url && url != this.getCurrentUrl()) {
+	if (lastUrl == '' || lastUrl != this.getCurrentUrl()) {
             this.waitFor(function clickOnPage() {
                 casper.echo('Next click');
-                var currentURL = this.getCurrentUrl();
+                lastUrl = this.getCurrentUrl();
                 this.click('input[value=Next]');
-                this.wait(1000, clickNext(currentURL));
+                this.wait(1000, clickNext);
                 return true;
             });
         } else {
-            casper.echo('Stuck');
+            casper.echo('Stuck ' + lastUrl);
         }
     }
 }
