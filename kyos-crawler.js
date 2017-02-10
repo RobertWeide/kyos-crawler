@@ -10,7 +10,7 @@ var checked = [];
 var currentLink = 0;
 var checkedLinks = 0;
 var fs = require('fs');
-var upTo = ~~casper.cli.get('max-depth') || 100;
+var upTo = ~~casper.cli.get('max-depth') || 25;
 var baseUrl = casper.cli.get(0);
 var links = [];
 var require = patchRequire(require)
@@ -127,14 +127,19 @@ function crawl(link) {
     this.then(clickNext);
 }
 
-function clickNext() {
+function clickNext(url) {
     if (this.exists('input[value=Next]')) {
-        this.waitFor(function clickOnPage() {
-            casper.echo('Next click');
-            this.click('input[value=Next]');
-            this.wait(1000, clickNext);
-            return true;
-        });
+	if (url && url != this.getCurrentUrl()) {
+            this.waitFor(function clickOnPage() {
+                casper.echo('Next click');
+                var currentURL = this.getCurrentUrl();
+                this.click('input[value=Next]');
+                this.wait(1000, clickNext(currentURL));
+                return true;
+            });
+        } else {
+            casper.echo('Stuck');
+        }
     }
 }
 
