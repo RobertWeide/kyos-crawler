@@ -3,7 +3,7 @@ if [ -f kyos-crawler-running.txt ]; then
     exit
 fi
 if [ `expr $(date +%s) - $(date +%s -r checked.lst)` -ge 3600 ]; then
-    foldername = `date +"%Y%m%d%H%M"`
+    foldername=`date +"%Y%m%d%H%M"`
     mkdir $foldername
     mv cookies.txt links.lst checked.lst crawler.log $foldername
 fi
