@@ -70,7 +70,7 @@ function crawl(link) {
         this.open(link);
         checked.push(link);
     });
-    this.wait(1000, function checkHTTPStatus() {
+    this.wait(500, function checkHTTPStatus() {
                         if (this.currentHTTPStatus === 404) {
                           this.warn(link + ' is missing (HTTP 404)');
                         } else if (this.currentHTTPStatus === 500) {
@@ -96,13 +96,13 @@ function crawl(link) {
             self.waitFor(function clickOnSort() {
                 casper.echo('Sort click: ' + header);
                 self.click('th[data-column='+header+']');
-                self.wait(1000, addNewLinks);
+                self.wait(500, addNewLinks);
                 return true;
             });
             self.waitFor(function clickOnSort() {
                 casper.echo('Sort click again: ' + header);
                 self.click('th[data-column='+header+']');
-                self.wait(1000, addNewLinks);
+                self.wait(500, addNewLinks);
                 return true;
             });
         } );
@@ -121,7 +121,7 @@ function crawl(link) {
                 self.waitFor(function clickOnPage() {
                     casper.echo('Page click: ' + pagenumber);
                     self.click('a.page[data-page="'+pagenumber+'"]');
-                    self.wait(1000, addNewLinks);
+                    self.wait(500, addNewLinks);
                     return true;
                 });
             } );
@@ -138,7 +138,7 @@ function clickNext() {
                 casper.echo('Next click');
                 lastUrl = this.getCurrentUrl();
                 this.click('input[value=Next]');
-                this.wait(1000, clickNext);
+                this.wait(500, clickNext);
                 return true;
             });
         } else {
