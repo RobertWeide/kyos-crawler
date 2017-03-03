@@ -20,6 +20,34 @@ var keepDir = "./";
 var jsuri = require('js-uri.js');
 var lastUrl = '';
 
+function repeatString(str, n) {
+    return new Array(n + 1).join(str);
+}
+
+function padZ(num, n) {
+    n = n || 2;
+    var numString = num.toString();
+    if (numString.length < n) {
+        var numString = repeatString('0', n - numString.length) + numString;
+    }
+    return numString;
+}
+
+function formattedDate(d) {
+    var day = d.getDate();
+    var month = d.getMonth() + 1; // Note the `+ 1` -- months start at zero.
+    var year = d.getFullYear();
+    var hour = d.getHours();
+    var min = d.getMinutes();
+    var sec = d.getSeconds();
+    var milli = d.getMilliseconds();
+    return "["+year+"-"+padZ(month)+"-"+padZ(day)+" "+padZ(hour)+":"+padZ(min)+":"+padZ(sec)+"."+padZ(milli,3)+"] ";
+}
+
+function timeEcho(message) {
+    casper.echo(formattedDate(new Date()) + message);
+}
+
 function absPath(url, base) {
     var newURI = new jsuri.URI(url)
     var baseURI = new jsuri.URI(base);
@@ -61,7 +89,7 @@ function addNewLinks() {
             console.log(e);
         }
     }
-    casper.echo(newLinks.length + " new links found total links now " + links.length);
+    timeEcho(newLinks.length + " new links found total links now " + links.length);
 };
 
 // Opens the page, perform tests and fetch next links
@@ -76,13 +104,13 @@ function crawl(link) {
                         } else if (this.currentHTTPStatus === 500) {
                           this.warn(link + ' is broken (HTTP 500)');
                         } else {
-                          casper.echo(link + f(' is okay (HTTP %s)', this.currentHTTPStatus));
+                            timeEcho(link + f(' is okay (HTTP %s)', this.currentHTTPStatus));
                         }
                     }
                 );
     this.then(addNewLinks);
     if (this.getCurrentUrl() == baseUrl + 'login') {
-        casper.echo('Adding log in');
+        timeEcho('Adding log in');
         this.then(login);
     }
     this.then(function clickSort() {
@@ -94,13 +122,13 @@ function crawl(link) {
         });
         casper.each(headers, function clickHeader(self, header) {
             self.waitFor(function clickOnSort() {
-                casper.echo('Sort click: ' + header);
+                timeEcho('Sort click: ' + header);
                 self.click('th[data-column='+header+']');
                 self.wait(500, addNewLinks);
                 return true;
             });
             self.waitFor(function clickOnSort() {
-                casper.echo('Sort click again: ' + header);
+                timeEcho('Sort click again: ' + header);
                 self.click('th[data-column='+header+']');
                 self.wait(500, addNewLinks);
                 return true;
@@ -116,10 +144,10 @@ function crawl(link) {
         });
         pages = utils.unique(pages);
         if (pages.length > 0) {
-            casper.echo('Pages: ' + pages);
+            timeEcho('Pages: ' + pages);
             casper.each(pages, function clickPage(self, pagenumber) {
                 self.waitFor(function clickOnPage() {
-                    casper.echo('Page click: ' + pagenumber);
+                    timeEcho('Page click: ' + pagenumber);
                     self.click('a.page[data-page="'+pagenumber+'"]');
                     self.wait(500, addNewLinks);
                     return true;
@@ -135,14 +163,14 @@ function clickNext() {
     if (this.exists('input[value=Next]')) {
 	if (lastUrl == '' || lastUrl != this.getCurrentUrl()) {
             this.waitFor(function clickOnPage() {
-                casper.echo('Next click');
+                timeEcho('Next click');
                 lastUrl = this.getCurrentUrl();
                 this.click('input[value=Next]');
                 this.wait(500, clickNext);
                 return true;
             });
         } else {
-            casper.echo('Stuck ' + lastUrl);
+            timeEcho('Stuck ' + lastUrl);
         }
     }
 }
@@ -157,7 +185,7 @@ function searchLinks() {
                                                                                        });
                                   }
                                  );
-    // casper.echo("evaluatedLinks " + evaluatedLinks);
+    // timeEcho("evaluatedLinks " + evaluatedLinks);
     var currentURL = this.getCurrentUrl();
     var cleanedLinks = cleanLinks.call(this, evaluatedLinks, currentURL);
     return cleanedLinks;
@@ -170,7 +198,7 @@ function check() {
         if (keepDir) {
             try {
                 var file = fs.open(keepDir + "checked.lst", "a");
-                file.writeLine(new Date().toLocaleString() + ' - ' + links[currentLink]);
+                file.writeLine(formattedDate(new Date()) + links[currentLink]);
                 file.close();
             } catch (e) {
                 console.log(e);
@@ -180,18 +208,18 @@ function check() {
         checkedLinks++;
         this.run(check);
     } else {
-        casper.echo("All done, " + checked.length + " of " + links.length + " links checked.");
+        timeEcho("All done, " + checked.length + " of " + links.length + " links checked.");
         this.exit();
     }
 }
 
 function login() {
-    // casper.echo('Going to log in');
+    // timeEcho('Going to log in');
     this.fill('form#loginform', {'identity': 'r_weide@yahoo.com', 'password': 'Casper@2017'}, true);
 }
 
 // casper.on('step.added', function(step) {
-//     casper.echo('Step added: ' + step);
+//     timeEcho('Step added: ' + step);
 // });
 
 function readFiles() {
@@ -200,7 +228,7 @@ function readFiles() {
             var file = fs.open(keepDir + "links.lst", "r");
             var fileLinks = file.read();
         } catch (e) {
-            console.log(e);
+            timeEcho(e);
         }
         if (file) {
             file.close();
@@ -220,7 +248,7 @@ function readFiles() {
             file = fs.open(keepDir + "checked.lst", "r");
             var fileChecked = file.read();
         } catch (e) {
-            console.log(e);
+            timeEcho(e);
         }
         if (file) {
             file.close();
@@ -242,7 +270,7 @@ function readFiles() {
 if (!baseUrl) {
     casper.warn('No url passed, aborting.').exit();
 } else {
-    casper.echo('Starting URL is ' + baseUrl);
+    timeEcho('Starting URL is ' + baseUrl);
 }
 // phantom.clearCookies();
 readFiles.call();
